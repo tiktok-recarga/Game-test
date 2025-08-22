@@ -1,9 +1,40 @@
-image: gitpod/workspace-android
+image: gitpod/workspace-base:latest
 
 tasks:
-  - init: |
-      sdkmanager "platforms;android-33" "system-images;android-33;google_apis;x86_64" "platform-tools" "emulator"
-      echo no | avdmanager create avd -n test -k "system-images;android-33;google_apis;x86_64"
-  - command: |
-      emulator -avd test -no-audio -no-window &
+  - name: Setup Android
+    init: |
+      # Instalar JDK
+      sudo apt-get update
+      sudo apt-get install -y openjdk-11-jdk
+      
+      # Descargar e instalar Android Command Line Tools
+      cd /home/gitpod
+      wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
+      unzip commandlinetools-linux-8512546_latest.zip
+      mkdir -p Android/Sdk/cmdline-tools/latest
+      mv cmdline-tools/* Android/Sdk/cmdline-tools/latest/
+      rm commandlinetools-linux-8512546_latest.zip
+      
+      # Configurar variables de entorno
+      echo 'export ANDROID_HOME="/home/gitpod/Android/Sdk"' >> ~/.bashrc
+      echo 'export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools:$PATH"' >> ~/.bashrc
+      source ~/.bashrc
+      
+      # Aceptar licencias
+      yes | sdkmanager --licenses
+      
+      # Instalar componentes de Android
+      sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.0"
+      
+      # Crear proyecto básico si no existe
+      if [ ! -f "build.gradle" ]; then
+        echo "Creando proyecto Android básico..."
+        # Aquí puedes agregar comandos para crear una estructura básica
+      fi
+
+  - name: Build Android Project
+    command: |
+      export ANDROID_HOME="/home/gitpod/Android/Sdk"
+      export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools:$PATH"
       ./gradlew assembleDebug
+      echo "Build completado! El APK está en app/build/outputs/apk/debug/"
