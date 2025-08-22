@@ -1,0 +1,9 @@
+image: gitpod/workspace-android
+
+tasks:
+  - init: |
+      sdkmanager "platforms;android-33" "system-images;android-33;google_apis;x86_64" "platform-tools" "emulator"
+      echo no | avdmanager create avd -n test -k "system-images;android-33;google_apis;x86_64"
+  - command: |
+      emulator -avd test -no-audio -no-window &
+      ./gradlew assembleDebug
